@@ -1,0 +1,65 @@
+name: Deploy Frontend to GitHub Pages
+
+# Runs whenever you push changes to the frontend (or trigger it manually
+# from the Actions tab on github.com). No VS Code needed.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "student-frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy at a time.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: student-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: student-frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          # Set this in: repo Settings > Secrets and variables > Actions >
+          # Variables > New repository variable named REACT_APP_API_URL,
+          # with your Render API URL (e.g. https://student-api.onrender.com).
+          # If unset, it falls back to localhost (only useful for local runs).
+          REACT_APP_API_URL: ${{ vars.REACT_APP_API_URL }}
+          CI: false # don't fail the build on lint warnings
+        run: npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: student-frontend/build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

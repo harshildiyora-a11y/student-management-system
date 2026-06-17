@@ -1,0 +1,16 @@
+# Render Blueprint — deploys the Student API backend.
+# On render.com: New + > Blueprint > pick this repo. Render reads this file
+# and creates the service automatically. It re-deploys on every push to main.
+services:
+  - type: web
+    name: student-api
+    runtime: node
+    rootDir: StudentAPI        # the backend lives in this subfolder
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /students
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # PORT is provided automatically by Render; server.js already reads it.
