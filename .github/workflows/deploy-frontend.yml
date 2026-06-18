@@ -29,6 +29,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Turns on GitHub Pages automatically (source = GitHub Actions) so you
+      # don't have to flip it on under Settings > Pages by hand. Without this,
+      # the deploy job 404s on a fresh repo.
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -42,9 +50,9 @@ jobs:
         env:
           # Set this in: repo Settings > Secrets and variables > Actions >
           # Variables > New repository variable named REACT_APP_API_URL,
-          # with your Render API URL (e.g. https://student-api.onrender.com).
-          # If unset, it falls back to localhost (only useful for local runs).
-          REACT_APP_API_URL: ${{ vars.REACT_APP_API_URL }}
+          # with your Render API URL. If unset, it defaults to the student-api
+          # service URL below so the deployed site still reaches the backend.
+          REACT_APP_API_URL: ${{ vars.REACT_APP_API_URL || 'https://student-api.onrender.com' }}
           CI: false # don't fail the build on lint warnings
         run: npm run build
 
